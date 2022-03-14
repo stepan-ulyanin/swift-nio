@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
+
 /// An automatically expanding ring buffer implementation backed by a `ContiguousArray`. Even though this implementation
 /// will automatically expand if more elements than `initialCapacity` are stored, it's advantageous to prevent
 /// expansions from happening frequently. Expansions will always force an allocation and a copy to happen.
@@ -152,6 +154,7 @@ extension CircularBuffer: Collection, MutableCollection {
     @inlinable
     public subscript(position: Index) -> Element {
         get {
+//            print("I am called with \(position)")
             assert(position.isValidIndex(for: self),
                    "illegal index used, index was for CircularBuffer with count \(position._backingCheck), " +
                    "but actual count is \(self.count)")
@@ -221,6 +224,23 @@ extension CircularBuffer: Collection, MutableCollection {
         case (false, false):
             return end.backingIndex &- start.backingIndex
         }
+    }
+    
+    public func _customIndexOfEquatableElement(_ element: Element) -> Index?? {
+        return .some(self._buffer.withUnsafeBytes { ptr in
+            return withUnsafeBytes(of: element) {
+                guard let idx = ptr.firstRange(of: $0) else { return nil }
+                let zeroIndex = Index(
+                    backingIndex: 0,
+                    backingCount: self.count,
+                    backingIndexOfHead: 0)
+                return self.index(zeroIndex, offsetBy: idx.lowerBound / 16)
+            }
+        })
+    }
+    
+    public func showBytes() {
+        print(self._buffer.withUnsafeBytes { $0.map { $0 } })
     }
 }
 
@@ -321,9 +341,11 @@ extension CircularBuffer {
         let idx = self.indexBeforeHeadIdx()
         self._buffer[idx] = value
         self.advanceHeadIdx(by: -1)
-
+        print("Prepending: \(value)", self, self.headBackingIndex, self.tailBackingIndex)
+        print("Start Index: ", self.startIndex, " End index: ", self.endIndex)
         if self.headBackingIndex == self.tailBackingIndex {
             // No more room left for another append so grow the buffer now.
+            print("Doubling!")
             self._doubleCapacity()
         }
     }
