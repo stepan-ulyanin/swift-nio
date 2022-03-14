@@ -336,6 +336,7 @@ extension CircularBuffer {
         let idx = self.indexBeforeHeadIdx()
         self._buffer[idx] = value
         self.advanceHeadIdx(by: -1)
+        
         if self.headBackingIndex == self.tailBackingIndex {
             // No more room left for another append so grow the buffer now.
             self._doubleCapacity()
