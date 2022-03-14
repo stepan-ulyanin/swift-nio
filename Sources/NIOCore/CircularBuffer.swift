@@ -154,7 +154,6 @@ extension CircularBuffer: Collection, MutableCollection {
     @inlinable
     public subscript(position: Index) -> Element {
         get {
-//            print("I am called with \(position)")
             assert(position.isValidIndex(for: self),
                    "illegal index used, index was for CircularBuffer with count \(position._backingCheck), " +
                    "but actual count is \(self.count)")
@@ -237,10 +236,6 @@ extension CircularBuffer: Collection, MutableCollection {
                 return self.index(zeroIndex, offsetBy: idx.lowerBound / 16)
             }
         })
-    }
-    
-    public func showBytes() {
-        print(self._buffer.withUnsafeBytes { $0.map { $0 } })
     }
 }
 
@@ -341,11 +336,8 @@ extension CircularBuffer {
         let idx = self.indexBeforeHeadIdx()
         self._buffer[idx] = value
         self.advanceHeadIdx(by: -1)
-        print("Prepending: \(value)", self, self.headBackingIndex, self.tailBackingIndex)
-        print("Start Index: ", self.startIndex, " End index: ", self.endIndex)
         if self.headBackingIndex == self.tailBackingIndex {
             // No more room left for another append so grow the buffer now.
-            print("Doubling!")
             self._doubleCapacity()
         }
     }
